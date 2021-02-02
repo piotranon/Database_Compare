@@ -1,0 +1,70 @@
+version: '3.8'
+
+networks: 
+  DatabaseCompare:
+
+services: 
+  
+  front-vue:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports: 
+      - "80:8080"
+    restart: always
+    container_name: front-vue
+    networks: 
+      - DatabaseCompare
+    volumes:
+      - './front:/app'
+  
+  api-django:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: always
+    volumes: 
+      - ./api/:/usr/src/app
+    networks: 
+      - DatabaseCompare 
+    ports:
+      - 8000:8000
+      - 8001:8001
+
+  clickhouse-server:
+    image: yandex/clickhouse-server
+    restart: always
+    networks: 
+      - DatabaseCompare  
+    ports:
+      - "2020:22"
+      - "8123:8123"
+      - "9000:9000"
+      - "9009:9009"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks: 
+      - DatabaseCompare
+    ports:
+      - "5432:5432"
+    
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - SA_PASSWORD=Pass@word
+      - ACCEPT_EULA=Y
+    networks: 
+      - DatabaseCompare
+    ports:
+      - "1433:1433"
+  
